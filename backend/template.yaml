@@ -1,0 +1,61 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Baby Tracker API
+
+Globals:
+  Function:
+    Timeout: 10
+    Runtime: provided.al2023
+    Architectures: [arm64]
+    Environment:
+      Variables:
+        TABLE_NAME: !Ref FeedingsTable
+        JWT_SECRET: !Sub '{{resolve:ssm:/baby-tracker/jwt-secret}}'
+        USER1_NAME: !Sub '{{resolve:ssm:/baby-tracker/user1-name}}'
+        USER1_PASSWORD: !Sub '{{resolve:ssm:/baby-tracker/user1-password}}'
+        USER2_NAME: !Sub '{{resolve:ssm:/baby-tracker/user2-name}}'
+        USER2_PASSWORD: !Sub '{{resolve:ssm:/baby-tracker/user2-password}}'
+
+Resources:
+  ApiFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      CodeUri: cmd/api/
+      Handler: bootstrap
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref FeedingsTable
+      Events:
+        CatchAll:
+          Type: HttpApi
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+        Root:
+          Type: HttpApi
+          Properties:
+            Path: /
+            Method: ANY
+
+  FeedingsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: baby-tracker
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint
+    Value: !Sub 'https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com'
