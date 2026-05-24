@@ -3,6 +3,6 @@
 	import { onMount } from 'svelte';
 
 	onMount(() => {
-		goto(localStorage.getItem('token') ? '/dashboard' : '/login');
+		goto(localStorage.getItem('token') ? '/history' : '/login');
 	});
 </script>

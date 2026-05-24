@@ -1,0 +1,17 @@
+# Frontend build artifacts
+frontend/build/
+frontend/.svelte-kit/
+frontend/node_modules/
+
+# Backend build artifacts
+backend/cmd/api/bootstrap
+backend/cmd/api/bootstrap.zip
+backend/cmd/local/local
+
+# Environment files
+.env
+.env.local
+frontend/.env.local
+
+# OS
+.DS_Store
