@@ -48,15 +48,15 @@
 		showModal = false;
 	}
 
-	$: hasValue = form.weight.trim() !== '' || form.height.trim() !== '';
+	$: hasValue = form.weight !== '' || form.height !== '';
 
 	async function save() {
 		if (!hasValue) return;
 		saving = true;
 
 		const timestamp = new Date(`${form.date}T${form.time}:00`).toISOString();
-		const weightLbs = form.weight.trim() !== '' ? parseFloat(form.weight) : undefined;
-		const heightIn = form.height.trim() !== '' ? parseFloat(form.height) : undefined;
+		const weightLbs = form.weight !== '' ? Number(form.weight) : undefined;
+		const heightIn = form.height !== '' ? Number(form.height) : undefined;
 		const data = { timestamp, weightLbs, heightIn };
 
 		try {

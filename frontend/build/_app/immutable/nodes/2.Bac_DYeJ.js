@@ -1,0 +1,1 @@
+import{s as e,p as n}from"../chunks/BSeaJ4Cw.js";import{S as s,r as a}from"../chunks/BNHIpwgD.js";import{g as r}from"../chunks/nUxS9Bqo.js";function i(o){return n(()=>{r(localStorage.getItem("token")?"/dashboard":"/login")}),[]}class c extends s{constructor(t){super(),a(this,t,i,null,e,{})}}export{c as component};
