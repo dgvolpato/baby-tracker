@@ -22,7 +22,9 @@
 			<span class="brand">Baby Tracker</span>
 			<div class="links">
 				<a href="/dashboard" class:active={$page.url.pathname === '/dashboard'}>Dashboard</a>
-				<a href="/history" class:active={$page.url.pathname === '/history'}>History</a>
+				<a href="/history" class:active={$page.url.pathname === '/history'}>Feedings</a>
+				<a href="/diapers" class:active={$page.url.pathname === '/diapers'}>Diapers</a>
+				<a href="/measurements" class:active={$page.url.pathname === '/measurements'}>Measurements</a>
 				<button class="btn-ghost logout" on:click={logout}>Log out</button>
 			</div>
 		</nav>

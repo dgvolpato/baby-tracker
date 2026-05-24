@@ -138,3 +138,235 @@ func (s *Store) DeleteFeeding(ctx context.Context, id string) error {
 	})
 	return err
 }
+
+// ── Diapers ──────────────────────────────────────────────────────────────────
+
+type diaperItem struct {
+	PK        string `dynamodbav:"pk"`
+	SK        string `dynamodbav:"sk"`
+	ID        string `dynamodbav:"id"`
+	Timestamp string `dynamodbav:"timestamp"`
+	Type      string `dynamodbav:"type"`
+	CreatedBy string `dynamodbav:"createdBy"`
+}
+
+func (s *Store) ListDiapers(ctx context.Context) ([]models.Diaper, error) {
+	out, err := s.client.Query(ctx, &dynamodb.QueryInput{
+		TableName:              aws.String(s.table),
+		KeyConditionExpression: aws.String("pk = :pk AND begins_with(sk, :prefix)"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":pk":     &types.AttributeValueMemberS{Value: babyPK},
+			":prefix": &types.AttributeValueMemberS{Value: "DIAPER#"},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var items []diaperItem
+	if err := attributevalue.UnmarshalListOfMaps(out.Items, &items); err != nil {
+		return nil, err
+	}
+
+	diapers := make([]models.Diaper, len(items))
+	for i, it := range items {
+		diapers[i] = models.Diaper{
+			ID:        it.ID,
+			Timestamp: it.Timestamp,
+			Type:      models.DiaperType(it.Type),
+			CreatedBy: it.CreatedBy,
+		}
+	}
+	sort.Slice(diapers, func(i, j int) bool {
+		return diapers[i].Timestamp > diapers[j].Timestamp
+	})
+	return diapers, nil
+}
+
+func (s *Store) CreateDiaper(ctx context.Context, d models.Diaper) error {
+	it := diaperItem{
+		PK:        babyPK,
+		SK:        "DIAPER#" + d.ID,
+		ID:        d.ID,
+		Timestamp: d.Timestamp,
+		Type:      string(d.Type),
+		CreatedBy: d.CreatedBy,
+	}
+	av, err := attributevalue.MarshalMap(it)
+	if err != nil {
+		return err
+	}
+	_, err = s.client.PutItem(ctx, &dynamodb.PutItemInput{
+		TableName: aws.String(s.table),
+		Item:      av,
+	})
+	return err
+}
+
+func (s *Store) UpdateDiaper(ctx context.Context, d models.Diaper) error {
+	tsVal, _ := attributevalue.Marshal(d.Timestamp)
+	typeVal, _ := attributevalue.Marshal(string(d.Type))
+
+	_, err := s.client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+		TableName: aws.String(s.table),
+		Key: map[string]types.AttributeValue{
+			"pk": &types.AttributeValueMemberS{Value: babyPK},
+			"sk": &types.AttributeValueMemberS{Value: "DIAPER#" + d.ID},
+		},
+		UpdateExpression: aws.String("SET #ts = :ts, #type = :type"),
+		ExpressionAttributeNames: map[string]string{
+			"#ts":   "timestamp",
+			"#type": "type",
+		},
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":ts":   tsVal,
+			":type": typeVal,
+		},
+	})
+	return err
+}
+
+func (s *Store) DeleteDiaper(ctx context.Context, id string) error {
+	_, err := s.client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
+		TableName: aws.String(s.table),
+		Key: map[string]types.AttributeValue{
+			"pk": &types.AttributeValueMemberS{Value: babyPK},
+			"sk": &types.AttributeValueMemberS{Value: "DIAPER#" + id},
+		},
+	})
+	return err
+}
+
+// ── Measurements ─────────────────────────────────────────────────────────────
+
+type measurementItem struct {
+	PK        string   `dynamodbav:"pk"`
+	SK        string   `dynamodbav:"sk"`
+	ID        string   `dynamodbav:"id"`
+	Timestamp string   `dynamodbav:"timestamp"`
+	WeightLbs *float64 `dynamodbav:"weightLbs,omitempty"`
+	HeightIn  *float64 `dynamodbav:"heightIn,omitempty"`
+	CreatedBy string   `dynamodbav:"createdBy"`
+}
+
+func (s *Store) ListMeasurements(ctx context.Context) ([]models.Measurement, error) {
+	out, err := s.client.Query(ctx, &dynamodb.QueryInput{
+		TableName:              aws.String(s.table),
+		KeyConditionExpression: aws.String("pk = :pk AND begins_with(sk, :prefix)"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":pk":     &types.AttributeValueMemberS{Value: babyPK},
+			":prefix": &types.AttributeValueMemberS{Value: "MEASUREMENT#"},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var items []measurementItem
+	if err := attributevalue.UnmarshalListOfMaps(out.Items, &items); err != nil {
+		return nil, err
+	}
+
+	measurements := make([]models.Measurement, len(items))
+	for i, it := range items {
+		measurements[i] = models.Measurement{
+			ID:        it.ID,
+			Timestamp: it.Timestamp,
+			WeightLbs: it.WeightLbs,
+			HeightIn:  it.HeightIn,
+			CreatedBy: it.CreatedBy,
+		}
+	}
+	sort.Slice(measurements, func(i, j int) bool {
+		return measurements[i].Timestamp > measurements[j].Timestamp
+	})
+	return measurements, nil
+}
+
+func (s *Store) CreateMeasurement(ctx context.Context, m models.Measurement) error {
+	it := measurementItem{
+		PK:        babyPK,
+		SK:        "MEASUREMENT#" + m.ID,
+		ID:        m.ID,
+		Timestamp: m.Timestamp,
+		WeightLbs: m.WeightLbs,
+		HeightIn:  m.HeightIn,
+		CreatedBy: m.CreatedBy,
+	}
+	av, err := attributevalue.MarshalMap(it)
+	if err != nil {
+		return err
+	}
+	_, err = s.client.PutItem(ctx, &dynamodb.PutItemInput{
+		TableName: aws.String(s.table),
+		Item:      av,
+	})
+	return err
+}
+
+func (s *Store) UpdateMeasurement(ctx context.Context, m models.Measurement) error {
+	tsVal, _ := attributevalue.Marshal(m.Timestamp)
+
+	exprParts := []string{"#ts = :ts"}
+	names := map[string]string{"#ts": "timestamp"}
+	values := map[string]types.AttributeValue{":ts": tsVal}
+
+	if m.WeightLbs != nil {
+		v, _ := attributevalue.Marshal(*m.WeightLbs)
+		exprParts = append(exprParts, "weightLbs = :w")
+		values[":w"] = v
+	}
+	if m.HeightIn != nil {
+		v, _ := attributevalue.Marshal(*m.HeightIn)
+		exprParts = append(exprParts, "heightIn = :h")
+		values[":h"] = v
+	}
+
+	updateExpr := "SET " + joinStrings(exprParts, ", ")
+
+	// Build REMOVE clause for cleared fields
+	var removes []string
+	if m.WeightLbs == nil {
+		removes = append(removes, "weightLbs")
+	}
+	if m.HeightIn == nil {
+		removes = append(removes, "heightIn")
+	}
+	if len(removes) > 0 {
+		updateExpr += " REMOVE " + joinStrings(removes, ", ")
+	}
+
+	_, err := s.client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+		TableName: aws.String(s.table),
+		Key: map[string]types.AttributeValue{
+			"pk": &types.AttributeValueMemberS{Value: babyPK},
+			"sk": &types.AttributeValueMemberS{Value: "MEASUREMENT#" + m.ID},
+		},
+		UpdateExpression:          aws.String(updateExpr),
+		ExpressionAttributeNames:  names,
+		ExpressionAttributeValues: values,
+	})
+	return err
+}
+
+func (s *Store) DeleteMeasurement(ctx context.Context, id string) error {
+	_, err := s.client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
+		TableName: aws.String(s.table),
+		Key: map[string]types.AttributeValue{
+			"pk": &types.AttributeValueMemberS{Value: babyPK},
+			"sk": &types.AttributeValueMemberS{Value: "MEASUREMENT#" + id},
+		},
+	})
+	return err
+}
+
+func joinStrings(parts []string, sep string) string {
+	result := ""
+	for i, p := range parts {
+		if i > 0 {
+			result += sep
+		}
+		result += p
+	}
+	return result
+}

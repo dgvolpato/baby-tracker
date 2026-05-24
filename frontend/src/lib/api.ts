@@ -40,6 +40,15 @@ export interface Feeding {
 
 export type FeedingInput = Omit<Feeding, 'id' | 'createdBy'>;
 
+export interface Diaper {
+	id: string;
+	timestamp: string;
+	type: 'wet' | 'poop' | 'both';
+	createdBy?: string;
+}
+
+export type DiaperInput = Omit<Diaper, 'id' | 'createdBy'>;
+
 export const api = {
 	login: (username: string, password: string) =>
 		request<{ token: string }>('POST', '/login', { username, password }),
@@ -49,5 +58,30 @@ export const api = {
 		create: (data: FeedingInput) => request<Feeding>('POST', '/feedings', data),
 		update: (id: string, data: FeedingInput) => request<Feeding>('PUT', `/feedings/${id}`, data),
 		delete: (id: string) => request<void>('DELETE', `/feedings/${id}`)
+	},
+
+	diapers: {
+		list: () => request<Diaper[]>('GET', '/diapers'),
+		create: (data: DiaperInput) => request<Diaper>('POST', '/diapers', data),
+		update: (id: string, data: DiaperInput) => request<Diaper>('PUT', `/diapers/${id}`, data),
+		delete: (id: string) => request<void>('DELETE', `/diapers/${id}`)
+	},
+
+	measurements: {
+		list: () => request<Measurement[]>('GET', '/measurements'),
+		create: (data: MeasurementInput) => request<Measurement>('POST', '/measurements', data),
+		update: (id: string, data: MeasurementInput) =>
+			request<Measurement>('PUT', `/measurements/${id}`, data),
+		delete: (id: string) => request<void>('DELETE', `/measurements/${id}`)
 	}
 };
+
+export interface Measurement {
+	id: string;
+	timestamp: string;
+	weightLbs?: number;
+	heightIn?: number;
+	createdBy?: string;
+}
+
+export type MeasurementInput = Omit<Measurement, 'id' | 'createdBy'>;

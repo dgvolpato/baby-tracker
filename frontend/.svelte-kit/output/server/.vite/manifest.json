@@ -148,6 +148,19 @@
       "_app/immutable/assets/_page.DmUPhoiY.css"
     ]
   },
+  "src/routes/diapers/+page.svelte": {
+    "file": "entries/pages/diapers/_page.svelte.js",
+    "name": "entries/pages/diapers/_page.svelte",
+    "src": "src/routes/diapers/+page.svelte",
+    "isEntry": true,
+    "imports": [
+      "_ssr.js",
+      "_utils2.js"
+    ],
+    "css": [
+      "_app/immutable/assets/_page.q9xJBdgn.css"
+    ]
+  },
   "src/routes/history/+page.svelte": {
     "file": "entries/pages/history/_page.svelte.js",
     "name": "entries/pages/history/_page.svelte",
@@ -174,6 +187,19 @@
     ],
     "css": [
       "_app/immutable/assets/_page.2oSdqVDk.css"
+    ]
+  },
+  "src/routes/measurements/+page.svelte": {
+    "file": "entries/pages/measurements/_page.svelte.js",
+    "name": "entries/pages/measurements/_page.svelte",
+    "src": "src/routes/measurements/+page.svelte",
+    "isEntry": true,
+    "imports": [
+      "_ssr.js",
+      "_utils2.js"
+    ],
+    "css": [
+      "_app/immutable/assets/_page.B2mspY0J.css"
     ]
   }
 }

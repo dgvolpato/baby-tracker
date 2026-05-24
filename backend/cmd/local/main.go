@@ -1,18 +1,16 @@
 // Local development server — wraps the Lambda handler in a plain net/http server.
-// Run: go run ./cmd/local from the backend directory (after copying .env.example to .env).
+// Run: go run ./cmd/local (after copying .env.example to .env)
 package main
 
 import (
 	"bufio"
-	"context"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 
-	"baby-tracker/internal/auth"
-	"baby-tracker/internal/handlers"
+	"baby-tracker/internal/router"
 
 	"github.com/aws/aws-lambda-go/events"
 )
@@ -25,7 +23,7 @@ func main() {
 
 	addr := ":3001"
 	log.Printf("local server listening on http://localhost%s", addr)
-	log.Fatal(http.ListenAndServe(addr, corsMiddleware(mux)))
+	log.Fatal(http.ListenAndServe(addr, mux))
 }
 
 func adapt(w http.ResponseWriter, r *http.Request) {
@@ -47,7 +45,7 @@ func adapt(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	resp, err := lambdaHandler(r.Context(), req)
+	resp, err := router.Handle(r.Context(), req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -62,50 +60,25 @@ func adapt(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func lambdaHandler(ctx context.Context, req events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
-	method := req.RequestContext.HTTP.Method
-	path := req.RawPath
-
-	headers := map[string]string{
-		"Content-Type":                 "application/json",
-		"Access-Control-Allow-Origin":  "*",
-		"Access-Control-Allow-Headers": "Authorization, Content-Type",
-		"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+func loadEnv(path string) {
+	f, err := os.Open(path)
+	if err != nil {
+		return
 	}
-
-	if method == "OPTIONS" {
-		return events.APIGatewayV2HTTPResponse{StatusCode: 200, Headers: headers}, nil
-	}
-
-	if method == "POST" && path == "/login" {
-		return handlers.Login(ctx, req, headers)
-	}
-
-	tokenStr := strings.TrimPrefix(req.Headers["authorization"], "Bearer ")
-	userID, err := auth.VerifyToken(tokenStr)
-	if err != nil || userID == "" {
-		return events.APIGatewayV2HTTPResponse{
-			StatusCode: http.StatusUnauthorized,
-			Headers:    headers,
-			Body:       `{"error":"unauthorized"}`,
-		}, nil
-	}
-
-	switch {
-	case method == "GET" && path == "/feedings":
-		return handlers.ListFeedings(ctx, req, headers)
-	case method == "POST" && path == "/feedings":
-		return handlers.CreateFeeding(ctx, req, headers)
-	case method == "PUT" && strings.HasPrefix(path, "/feedings/"):
-		return handlers.UpdateFeeding(ctx, req, headers)
-	case method == "DELETE" && strings.HasPrefix(path, "/feedings/"):
-		return handlers.DeleteFeeding(ctx, req, headers)
-	default:
-		return events.APIGatewayV2HTTPResponse{
-			StatusCode: http.StatusNotFound,
-			Headers:    headers,
-			Body:       `{"error":"not found"}`,
-		}, nil
+	defer f.Close()
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		k, v, ok := strings.Cut(line, "=")
+		if !ok {
+			continue
+		}
+		if os.Getenv(strings.TrimSpace(k)) == "" {
+			os.Setenv(strings.TrimSpace(k), strings.TrimSpace(v))
+		}
 	}
 }
 
@@ -122,26 +95,5 @@ func corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// loadEnv reads a simple KEY=VALUE file and sets env vars (does not override existing ones).
-func loadEnv(path string) {
-	f, err := os.Open(path)
-	if err != nil {
-		return
-	}
-	defer f.Close()
-
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-		k, v, ok := strings.Cut(line, "=")
-		if !ok {
-			continue
-		}
-		if os.Getenv(strings.TrimSpace(k)) == "" {
-			os.Setenv(strings.TrimSpace(k), strings.TrimSpace(v))
-		}
-	}
-}
+// keep corsMiddleware to avoid unused warning — router.Handle handles CORS internally
+var _ = corsMiddleware
