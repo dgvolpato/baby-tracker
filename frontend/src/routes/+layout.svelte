@@ -30,17 +30,36 @@
 {#if $page.url.pathname !== '/login'}
 	<header>
 		<span class="brand">Baby Tracker</span>
-		<button
-			class="hamburger"
-			class:open={menuOpen}
-			aria-label="Open menu"
-			aria-expanded={menuOpen}
-			on:click={() => (menuOpen = !menuOpen)}
-		>
-			<span></span>
-			<span></span>
-			<span></span>
-		</button>
+		<div class="header-right">
+			<a href="/dashboard" class="shortcut" class:active={$page.url.pathname === '/dashboard'} aria-label="Dashboard">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+					<rect x="3" y="3" width="7" height="7" rx="1"/>
+					<rect x="14" y="3" width="7" height="7" rx="1"/>
+					<rect x="3" y="14" width="7" height="7" rx="1"/>
+					<rect x="14" y="14" width="7" height="7" rx="1"/>
+				</svg>
+			</a>
+			<a href="/history" class="shortcut" class:active={$page.url.pathname === '/history'} aria-label="Feedings">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+					<g transform="rotate(45, 12, 12)">
+						<rect x="10.5" y="1" width="3" height="3" rx="1.5"/>
+						<rect x="8.5" y="4" width="7" height="2.5" rx="1"/>
+						<path d="M8.5 6.5 C6 8 5.5 10 5.5 12.5 L5.5 18.5 Q5.5 22.5 12 22.5 Q18.5 22.5 18.5 18.5 L18.5 12.5 C18.5 10 18 8 15.5 6.5 Z"/>
+					</g>
+				</svg>
+			</a>
+			<button
+				class="hamburger"
+				class:open={menuOpen}
+				aria-label="Open menu"
+				aria-expanded={menuOpen}
+				on:click={() => (menuOpen = !menuOpen)}
+			>
+				<span></span>
+				<span></span>
+				<span></span>
+			</button>
+		</div>
 	</header>
 
 	{#if menuOpen}
@@ -138,6 +157,33 @@
 	.brand {
 		font-weight: 600;
 		font-size: 17px;
+	}
+	.header-right {
+		display: flex;
+		align-items: center;
+		gap: 2px;
+	}
+	.shortcut {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 36px;
+		height: 36px;
+		border-radius: var(--radius);
+		color: var(--text-muted);
+		transition: background 0.15s, color 0.15s;
+	}
+	.shortcut :global(svg) {
+		width: 20px;
+		height: 20px;
+	}
+	.shortcut:hover {
+		background: var(--border);
+		color: var(--text);
+	}
+	.shortcut.active {
+		color: var(--accent);
+		background: var(--accent-light);
 	}
 
 	/* Hamburger button */
