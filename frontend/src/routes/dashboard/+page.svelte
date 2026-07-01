@@ -10,6 +10,7 @@
 		formula: number;
 		breast: number;
 		count: number;
+		vitaminD: number;
 	}
 
 	let feedings: Feeding[] = [];
@@ -23,13 +24,14 @@
 		for (const f of list) {
 			const key = toLocalInputDate(new Date(f.timestamp));
 			if (!map.has(key)) {
-				map.set(key, { date: key, label: dayLabel(key), total: 0, formula: 0, breast: 0, count: 0 });
+				map.set(key, { date: key, label: dayLabel(key), total: 0, formula: 0, breast: 0, count: 0, vitaminD: 0 });
 			}
 			const day = map.get(key)!;
 			day.total = Math.round((day.total + f.oz) * 10) / 10;
 			day.count++;
 			if (f.type === 'formula') day.formula = Math.round((day.formula + f.oz) * 10) / 10;
 			else day.breast = Math.round((day.breast + f.oz) * 10) / 10;
+			if (f.vitaminD) day.vitaminD++;
 		}
 		return Array.from(map.values()).sort((a, b) => b.date.localeCompare(a.date));
 	}
@@ -68,6 +70,9 @@
 						{/if}
 						{#if day.breast > 0}
 							<span class="tag breast">Breast {fmtOz(day.breast)}</span>
+						{/if}
+						{#if day.vitaminD > 0}
+							<span class="tag vitd">Vit D</span>
 						{/if}
 						<span class="count">{day.count} feeding{day.count !== 1 ? 's' : ''}</span>
 					</div>
@@ -129,6 +134,10 @@
 	.breast {
 		background: #fde8f0;
 		color: #b5477a;
+	}
+	.vitd {
+		background: #fef9c3;
+		color: #854d0e;
 	}
 	.count {
 		font-size: 12px;

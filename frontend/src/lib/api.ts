@@ -35,6 +35,7 @@ export interface Feeding {
 	timestamp: string;
 	type: 'formula' | 'breast';
 	oz: number;
+	vitaminD?: boolean;
 	createdBy?: string;
 }
 

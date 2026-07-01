@@ -12,5 +12,6 @@ type Feeding struct {
 	Timestamp string      `json:"timestamp" dynamodbav:"timestamp"`
 	Type      FeedingType `json:"type"      dynamodbav:"type"`
 	Oz        float64     `json:"oz"        dynamodbav:"oz"`
+	VitaminD  bool        `json:"vitaminD"  dynamodbav:"vitaminD"`
 	CreatedBy string      `json:"createdBy" dynamodbav:"createdBy"`
 }

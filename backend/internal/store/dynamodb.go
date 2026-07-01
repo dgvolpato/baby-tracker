@@ -45,6 +45,7 @@ type dbItem struct {
 	Timestamp string  `dynamodbav:"timestamp"`
 	Type      string  `dynamodbav:"type"`
 	Oz        float64 `dynamodbav:"oz"`
+	VitaminD  bool    `dynamodbav:"vitaminD"`
 	CreatedBy string  `dynamodbav:"createdBy"`
 }
 
@@ -73,6 +74,7 @@ func (s *Store) ListFeedings(ctx context.Context) ([]models.Feeding, error) {
 			Timestamp: it.Timestamp,
 			Type:      models.FeedingType(it.Type),
 			Oz:        it.Oz,
+			VitaminD:  it.VitaminD,
 			CreatedBy: it.CreatedBy,
 		}
 	}
@@ -90,6 +92,7 @@ func (s *Store) CreateFeeding(ctx context.Context, f models.Feeding) error {
 		Timestamp: f.Timestamp,
 		Type:      string(f.Type),
 		Oz:        f.Oz,
+		VitaminD:  f.VitaminD,
 		CreatedBy: f.CreatedBy,
 	}
 	av, err := attributevalue.MarshalMap(it)
@@ -107,6 +110,7 @@ func (s *Store) UpdateFeeding(ctx context.Context, f models.Feeding) error {
 	tsVal, _ := attributevalue.Marshal(f.Timestamp)
 	typeVal, _ := attributevalue.Marshal(string(f.Type))
 	ozVal, _ := attributevalue.Marshal(f.Oz)
+	vitDVal, _ := attributevalue.Marshal(f.VitaminD)
 
 	_, err := s.client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
 		TableName: aws.String(s.table),
@@ -114,7 +118,7 @@ func (s *Store) UpdateFeeding(ctx context.Context, f models.Feeding) error {
 			"pk": &types.AttributeValueMemberS{Value: babyPK},
 			"sk": &types.AttributeValueMemberS{Value: "FEEDING#" + f.ID},
 		},
-		UpdateExpression: aws.String("SET #ts = :ts, #type = :type, oz = :oz"),
+		UpdateExpression: aws.String("SET #ts = :ts, #type = :type, oz = :oz, vitaminD = :vitD"),
 		ExpressionAttributeNames: map[string]string{
 			"#ts":   "timestamp",
 			"#type": "type",
@@ -123,6 +127,7 @@ func (s *Store) UpdateFeeding(ctx context.Context, f models.Feeding) error {
 			":ts":   tsVal,
 			":type": typeVal,
 			":oz":   ozVal,
+			":vitD": vitDVal,
 		},
 	})
 	return err

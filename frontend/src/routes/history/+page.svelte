@@ -17,6 +17,7 @@
 		time: string;
 		type: 'formula' | 'breast';
 		oz: string;
+		vitaminD: boolean;
 	}
 
 	function freshForm(): FormState {
@@ -24,8 +25,9 @@
 		return {
 			date: toLocalInputDate(now),
 			time: roundedTimeValue(now),
-			type: 'formula',
-			oz: ''
+			type: 'breast',
+			oz: '',
+			vitaminD: false
 		};
 	}
 
@@ -45,7 +47,8 @@
 			date: toLocalInputDate(d),
 			time: `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`,
 			type: f.type,
-			oz: String(f.oz)
+			oz: String(f.oz),
+			vitaminD: f.vitaminD ?? false
 		};
 		showModal = true;
 	}
@@ -59,7 +62,7 @@
 		if (!form.oz || isNaN(ozNum) || ozNum <= 0) return;
 		saving = true;
 		const timestamp = new Date(`${form.date}T${form.time}:00`).toISOString();
-		const data = { timestamp, type: form.type, oz: ozNum };
+		const data = { timestamp, type: form.type, oz: ozNum, vitaminD: form.vitaminD };
 		try {
 			if (editingId) {
 				const updated = await api.feedings.update(editingId, data);
@@ -112,7 +115,12 @@
 				<div class="row card">
 					<div class="row-left">
 						<span class="row-time">{formatDateTime(f.timestamp)}</span>
-						<span class="tag {f.type}">{f.type === 'formula' ? 'Formula' : 'Breast milk'}</span>
+						<div class="row-tags">
+							<span class="tag {f.type}">{f.type === 'formula' ? 'Formula' : 'Breast milk'}</span>
+							{#if f.vitaminD}
+								<span class="tag vitd">Vit D</span>
+							{/if}
+						</div>
 					</div>
 					<div class="row-right">
 						<span class="row-oz">{f.oz} oz</span>
@@ -161,8 +169,13 @@
 
 			<div class="field">
 				<label for="f-oz">Amount (oz)</label>
-				<input id="f-oz" type="number" min="0.5" step="0.5" bind:value={form.oz} placeholder="e.g. 4" />
+				<input id="f-oz" type="number" inputmode="decimal" min="0.5" step="0.5" bind:value={form.oz} placeholder="e.g. 4" />
 			</div>
+
+			<label class="checkbox-row">
+				<input type="checkbox" bind:checked={form.vitaminD} />
+				Vitamin D given
+			</label>
 
 			<div class="modal-actions">
 				<button class="btn-ghost" on:click={closeModal}>Cancel</button>
@@ -236,6 +249,11 @@
 		padding: 4px 10px;
 		font-size: 13px;
 	}
+	.row-tags {
+		display: flex;
+		gap: 4px;
+		flex-wrap: wrap;
+	}
 	.tag {
 		font-size: 11px;
 		padding: 2px 7px;
@@ -249,6 +267,21 @@
 	.breast {
 		background: #fde8f0;
 		color: #b5477a;
+	}
+	.vitd {
+		background: #fef9c3;
+		color: #854d0e;
+	}
+	.checkbox-row {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		font-size: 14px;
+		cursor: pointer;
+	}
+	.checkbox-row input {
+		width: auto;
+		cursor: pointer;
 	}
 
 	/* Modal */
